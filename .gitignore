@@ -1,2 +1,13 @@
 # 忽略word缓存文件
 ~$*.doc
+# 忽略临时文档
+_.md
+# 忽略 .vscode 文件夹
+.vscode/
+src/MCU/FOC/.vscode/c_cpp_properties.json
+src/MCU/FOC/.vscode/extensions.json
+src/MCU/FOC/.vscode/launch.json
+src/MCU/FOC/.vscode/tasks.json
+
+# 忽略 build文件夹
+build/
