@@ -46,6 +46,9 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 
+# Collect all .c files in control directory
+file(GLOB CONTROL_SOURCES "${CMAKE_SOURCE_DIR}/control/*.c")
+
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     PRIVATE
@@ -54,6 +57,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${RTT_DIR}/SEGGER_RTT_ASM_ARMv7M.S
 
     # Add user sources here
+    ${CONTROL_SOURCES}
 )
 
 # Add include paths
@@ -62,6 +66,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     PRIVATE
     ${RTT_DIR}
+    ${CMAKE_SOURCE_DIR}/control
 )
 
 # Add project symbols (macros)
