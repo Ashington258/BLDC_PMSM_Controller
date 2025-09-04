@@ -4,8 +4,10 @@
 #include "main.h"
 #include <stdint.h>
 
-
 //-------------调用示例-------------//
+// 0. 声明结构体
+// static SPWM_t spwm;
+
 // 1. 初始化
 // // 已知你的 PWM 例子是 20kHz，则让 SPWM_Update 也以 20kHz 调用
 // SPWM_Init(&spwm, &htim1, /*update_rate_hz=*/20000.0f, /*init_theta=*/0.0f);
