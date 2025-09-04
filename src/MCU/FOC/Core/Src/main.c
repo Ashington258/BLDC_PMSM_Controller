@@ -31,7 +31,7 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "log.h"
-#include "spwm.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,6 +53,7 @@
 
 /* USER CODE BEGIN PV */
 static SPWM_t spwm;
+SVPWM_Handle svpwm;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -73,6 +74,7 @@ void SWO_Print(const char *s)
     ITM_SendChar((uint32_t)(*s++)); // 使用 CMSIS 官方函数
   }
 }
+
 /* USER CODE END 0 */
 
 /**
@@ -124,13 +126,15 @@ int main(void)
   LOG_WARN("Test warning message");
   LOG_ERROR("Test error message");
   LOG_INFO("ACPR = %lu\n", (SystemCoreClock / 2000000) - 1);
+  SVPWM_Defaults(&svpwm);
+#ifndef SVPWM_NO_HAL
+  SVPWM_AttachTimer(&svpwm, &htim1, TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3);
+#endif
+  SVPWM_Init(&svpwm, /*update_rate_hz=*/20000.0f, /*init_theta=*/0.0f);
+  SVPWM_SetOpenloop(&svpwm, /*elec_freq_hz=*/100.0f, /*modulation=*/0.5f);
+  SVPWM_Start(&svpwm);
 
-
-  // 已知你的 PWM 例子是 20kHz，则让 SPWM_Update 也以 20kHz 调用
-  SPWM_Init(&spwm, &htim1, /*update_rate_hz=*/20000.0f, /*init_theta=*/0.0f);
-  // 设定开环：电角频率 100Hz，调制度 0.5（可根据母线电压与负载微调）
-  SPWM_SetOpenloop(&spwm, 100.0f, 0.5f);
-  
+  HAL_UART_Transmit_IT(&huart1, (uint8_t *)"System Init Success!\n", 12);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -138,7 +142,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    SPWM_Update(&spwm);
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

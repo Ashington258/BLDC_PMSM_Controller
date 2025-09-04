@@ -60,9 +60,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${RTT_DIR}/SEGGER_RTT.c
     ${RTT_DIR}/SEGGER_RTT_printf.c
     ${RTT_DIR}/SEGGER_RTT_ASM_ARMv7M.S
-
     # Add user sources here
     ${CONTROL_SOURCES}
+    ${CMAKE_SOURCE_DIR}/Core/Src/retarget.c # 由于串口重定向
 )
 
 # Add include paths
@@ -86,3 +86,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
     # Add user defined libraries
 )
+
+# Enable float printf//用于串口重定向的浮点支持
+target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -u _printf_float)
