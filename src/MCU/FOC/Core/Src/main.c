@@ -52,7 +52,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-static FOC_t foc;
+static SPWM_t spwm;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -125,30 +125,12 @@ int main(void)
   LOG_ERROR("Test error message");
   LOG_INFO("ACPR = %lu\n", (SystemCoreClock / 2000000) - 1);
 
-  // 启动三路主通道 + 三路互补通道
-  if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)
-    Error_Handler();
-  if (HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)
-    Error_Handler();
-  if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2) != HAL_OK)
-    Error_Handler();
-  if (HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2) != HAL_OK)
-    Error_Handler();
-  if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3) != HAL_OK)
-    Error_Handler();
-  if (HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3) != HAL_OK)
-    Error_Handler();
-  // 保险起见，显式打开高级定时器主输出使能（MOE）
-  __HAL_TIM_MOE_ENABLE(&htim1);
-  // 如果你没有把 Pulse 设成 2500，这里也可以再设一次（ARR=4999时为约50%）
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 2500);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 2500);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 2500);
 
-  // 已知你的 PWM 例子是 20kHz，则让 FOC_Update 也以 20kHz 调用
-  FOC_Init(&foc, &htim1, /*update_rate_hz=*/20000.0f, /*init_theta=*/0.0f);
+  // 已知你的 PWM 例子是 20kHz，则让 SPWM_Update 也以 20kHz 调用
+  SPWM_Init(&spwm, &htim1, /*update_rate_hz=*/20000.0f, /*init_theta=*/0.0f);
   // 设定开环：电角频率 100Hz，调制度 0.5（可根据母线电压与负载微调）
-  FOC_SetOpenloop(&foc, 100.0f, 0.5f);
+  SPWM_SetOpenloop(&spwm, 100.0f, 0.5f);
+  
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -156,7 +138,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    FOC_Update(&foc);
+    SPWM_Update(&spwm);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

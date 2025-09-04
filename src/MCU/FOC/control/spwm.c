@@ -23,27 +23,27 @@ static inline float clampf(float x, float lo, float hi)
     return (x < lo) ? lo : (x > hi ? hi : x);
 }
 
-void FOC_Init(FOC_t *foc,
-              TIM_HandleTypeDef *htim,
-              float update_rate_hz,
-              float init_theta_rad)
+void SPWM_Init(SPWM_t *spwm,
+               TIM_HandleTypeDef *htim,
+               float update_rate_hz,
+               float init_theta_rad)
 {
-    foc->htim = htim;
-    foc->theta = wrap_angle_0_2pi(init_theta_rad);
-    foc->elec_freq_hz = 0.0f;
-    foc->modulation = 0.0f;
+    spwm->htim = htim;
+    spwm->theta = wrap_angle_0_2pi(init_theta_rad);
+    spwm->elec_freq_hz = 0.0f;
+    spwm->modulation = 0.0f;
     // dt = 1 / 调用频率
     if (update_rate_hz <= 0.0f)
         update_rate_hz = 10000.0f; // fallback: 10kHz
-    foc->dt_s = 1.0f / update_rate_hz;
+    spwm->dt_s = 1.0f / update_rate_hz;
 }
 
-void FOC_SetOpenloop(FOC_t *foc,
-                     float elec_freq_hz,
-                     float modulation)
+void SPWM_SetOpenloop(SPWM_t *spwm,
+                      float elec_freq_hz,
+                      float modulation)
 {
-    foc->elec_freq_hz = elec_freq_hz;
-    foc->modulation = clampf(modulation, 0.0f, 0.98f);
+    spwm->elec_freq_hz = elec_freq_hz;
+    spwm->modulation = clampf(modulation, 0.0f, 0.98f);
 }
 
 /**
@@ -57,18 +57,18 @@ void FOC_SetOpenloop(FOC_t *foc,
  *
  * 注意：互补与死区由定时器硬件处理，这里只写 CCR1/2/3。
  */
-void FOC_Update(FOC_t *foc)
+void SPWM_Update(SPWM_t *spwm)
 {
-    if (!foc || !foc->htim)
+    if (!spwm || !spwm->htim)
         return;
 
     // 1) 推进电角度：θ(k+1) = θ(k) + 2π * f_elec * dt
-    foc->theta += 2.0f * (float)M_PI * foc->elec_freq_hz * foc->dt_s;
-    foc->theta = wrap_angle_0_2pi(foc->theta);
+    spwm->theta += 2.0f * (float)M_PI * spwm->elec_freq_hz * spwm->dt_s;
+    spwm->theta = wrap_angle_0_2pi(spwm->theta);
 
     // 2) 生成三相正弦（电压归一化）
-    const float m = foc->modulation; // 0..0.98
-    const float th = foc->theta;
+    const float m = spwm->modulation; // 0..0.98
+    const float th = spwm->theta;
     const float th_b = th - 2.0f * (float)M_PI / 3.0f;
     const float th_c = th + 2.0f * (float)M_PI / 3.0f;
 
@@ -86,12 +86,12 @@ void FOC_Update(FOC_t *foc)
     du_c = clampf(du_c, 0.0f, 1.0f);
 
     // 4) 写入 CCR（与计数模式无关；中心对齐时HAL内部会处理翻转）
-    uint32_t arr = __HAL_TIM_GET_AUTORELOAD(foc->htim); // 例如 4999
+    uint32_t arr = __HAL_TIM_GET_AUTORELOAD(spwm->htim); // 例如 4999
     uint32_t ccr1 = (uint32_t)(du_a * (float)arr);
     uint32_t ccr2 = (uint32_t)(du_b * (float)arr);
     uint32_t ccr3 = (uint32_t)(du_c * (float)arr);
 
-    __HAL_TIM_SET_COMPARE(foc->htim, TIM_CHANNEL_1, ccr1);
-    __HAL_TIM_SET_COMPARE(foc->htim, TIM_CHANNEL_2, ccr2);
-    __HAL_TIM_SET_COMPARE(foc->htim, TIM_CHANNEL_3, ccr3);
+    __HAL_TIM_SET_COMPARE(spwm->htim, TIM_CHANNEL_1, ccr1);
+    __HAL_TIM_SET_COMPARE(spwm->htim, TIM_CHANNEL_2, ccr2);
+    __HAL_TIM_SET_COMPARE(spwm->htim, TIM_CHANNEL_3, ccr3);
 }
