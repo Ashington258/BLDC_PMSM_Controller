@@ -123,9 +123,12 @@ def process_channels(
 # ------------------------
 def main():
     files = [
-        "data/wavedata/SDS824X_HD_CSV_C1_1.csv",
-        "data/wavedata/SDS824X_HD_CSV_C2_1.csv",
-        "data/wavedata/SDS824X_HD_CSV_C3_1.csv",
+        # "data/wavedata/SDS824X_HD_CSV_C1_1.csv",
+        # "data/wavedata/SDS824X_HD_CSV_C2_1.csv",
+        # "data/wavedata/SDS824X_HD_CSV_C3_1.csv",
+        "data/wavedata/svpwm_C1_1.csv",
+        "data/wavedata/svpwm_C2_1.csv",
+        "data/wavedata/svpwm_C3_1.csv",
     ]
     process_channels(files, cutoff_hz=2000.0, plot_points=20000)
 
