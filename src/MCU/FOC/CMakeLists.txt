@@ -47,7 +47,12 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 # Collect all .c files in control directory
-file(GLOB CONTROL_SOURCES "${CMAKE_SOURCE_DIR}/control/*.c")
+file(GLOB CONTROL_SOURCES
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/control/*.c"
+    "${CMAKE_SOURCE_DIR}/control/*.S"
+    "${CMAKE_SOURCE_DIR}/control/*.s"
+)
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE

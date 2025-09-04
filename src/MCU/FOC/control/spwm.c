@@ -1,4 +1,4 @@
-#include "foc.h"
+#include "spwm.h"
 #include <math.h>
 
 // 如果你的编译器没有 M_PI，可以自行定义：
