@@ -134,7 +134,7 @@ int main(void)
   SVPWM_SetOpenloop(&svpwm, /*elec_freq_hz=*/100.0f, /*modulation=*/0.5f);
   SVPWM_Start(&svpwm);
 
-  HAL_UART_Transmit_IT(&huart1, (uint8_t *)"System Init Success!\n", 12);
+  HAL_UART_Transmit_IT(&huart1, (uint8_t *)"System Init Success!\r\n",24);
   /* USER CODE END 2 */
 
   /* Infinite loop */
