@@ -233,10 +233,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if (htim->Instance == TIM1)
   {
-
-    SVPWM_Step(&svpwm); // 每个PWM周期调用一次
-    // 测试串口
-    // HAL_UART_Transmit_IT(&huart1, (uint8_t *)"Go into the interrupt\n", 12);
+    SVPWM_TaskStep(&svpwm); // 与 PWM 更新同步，20 kHz
   }
 }
 /* USER CODE END 1 */

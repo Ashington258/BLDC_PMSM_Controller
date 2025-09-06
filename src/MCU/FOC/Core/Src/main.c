@@ -126,15 +126,34 @@ int main(void)
   LOG_WARN("Test warning message");
   LOG_ERROR("Test error message");
   LOG_INFO("ACPR = %lu\n", (SystemCoreClock / 2000000) - 1);
+  /* main.c --- 用户初始化区域 */
   SVPWM_Defaults(&svpwm);
+  SVPWM_SetPolePairs(&svpwm, /*极对数*/ 7); 
 #ifndef SVPWM_NO_HAL
   SVPWM_AttachTimer(&svpwm, &htim1, TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3);
 #endif
-  SVPWM_Init(&svpwm, /*update_rate_hz=*/20000.0f, /*init_theta=*/0.0f);
-  SVPWM_SetOpenloop(&svpwm, /*elec_freq_hz=*/100.0f, /*modulation=*/0.5f);
+  //由于中心对齐会跟新两次，所以触发频率更新为2*20000
+  SVPWM_Init(&svpwm, /*update_rate_hz=*/40000.0f, /*init_theta=*/0.0f);
   SVPWM_Start(&svpwm);
 
-  HAL_UART_Transmit_IT(&huart1, (uint8_t *)"System Init Success!\r\n",24);
+  // 以 3S~4S 直驱、无负载为前提：
+  // v_align：对齐矢量幅值（归一化）
+  // t_align_s：对齐时长
+  // fe_target_hz：目标电角频率（开环）
+  // fe_slew_hz_per_s：频率斜坡（越大越快）
+  // m_target：目标调制度
+  // m_slew_per_s：m 的斜坡
+  SVPWM_StartSequence(&svpwm,
+                      /* v_align       */ 0.35f,
+                      /* t_align_s     */ 0.50f,
+                      /* fe_target_hz  */ 50.0f,
+                      /* fe_slew_hz/s  */ 10.0f,
+                      /* m_target      */ 0.35f,
+                      /* m_slew /s     */ 1.0f);
+  /* 可选：若你有母线电压测量，周期更新 */
+  SVPWM_UpdateVdc(&svpwm, /*Vdc*/ 24.0f);   
+
+  HAL_UART_Transmit_IT(&huart1, (uint8_t *)"System Init Success!\r\n", 24);
   /* USER CODE END 2 */
 
   /* Infinite loop */
