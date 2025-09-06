@@ -25,6 +25,7 @@
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim3;
 
 /* TIM1 init function */
 void MX_TIM1_Init(void)
@@ -45,7 +46,7 @@ void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 0;
   htim1.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
-  htim1.Init.Period = 5000 - 1;
+  htim1.Init.Period = 5000-1;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
@@ -121,38 +122,115 @@ void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 2 */
   HAL_TIM_MspPostInit(&htim1);
-  // 开启更新中断（推荐）
-  HAL_TIM_Base_Start_IT(&htim1);
-}
 
-void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *tim_baseHandle)
+}
+/* TIM3 init function */
+void MX_TIM3_Init(void)
 {
 
-  if (tim_baseHandle->Instance == TIM1)
-  {
-    /* USER CODE BEGIN TIM1_MspInit 0 */
+  /* USER CODE BEGIN TIM3_Init 0 */
 
-    /* USER CODE END TIM1_MspInit 0 */
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_HallSensor_InitTypeDef sConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 65535;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC1Filter = 0;
+  sConfig.Commutation_Delay = 0;
+  if (HAL_TIMEx_HallSensor_Init(&htim3, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_OC2REF;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+
+}
+
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
+{
+
+  if(tim_baseHandle->Instance==TIM1)
+  {
+  /* USER CODE BEGIN TIM1_MspInit 0 */
+
+  /* USER CODE END TIM1_MspInit 0 */
     /* TIM1 clock enable */
     __HAL_RCC_TIM1_CLK_ENABLE();
 
     /* TIM1 interrupt Init */
     HAL_NVIC_SetPriority(TIM1_UP_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(TIM1_UP_IRQn);
-    /* USER CODE BEGIN TIM1_MspInit 1 */
+  /* USER CODE BEGIN TIM1_MspInit 1 */
 
-    /* USER CODE END TIM1_MspInit 1 */
+  /* USER CODE END TIM1_MspInit 1 */
   }
 }
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *timHandle)
+
+void HAL_TIMEx_HallSensor_MspInit(TIM_HandleTypeDef* timex_hallsensorHandle)
 {
 
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if (timHandle->Instance == TIM1)
+  if(timex_hallsensorHandle->Instance==TIM3)
   {
-    /* USER CODE BEGIN TIM1_MspPostInit 0 */
+  /* USER CODE BEGIN TIM3_MspInit 0 */
 
-    /* USER CODE END TIM1_MspPostInit 0 */
+  /* USER CODE END TIM3_MspInit 0 */
+    /* TIM3 clock enable */
+    __HAL_RCC_TIM3_CLK_ENABLE();
+
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    /**TIM3 GPIO Configuration
+    PB5     ------> TIM3_CH2
+    PB4 (NJTRST)     ------> TIM3_CH1
+    PC8     ------> TIM3_CH3
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_4;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_8;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /* USER CODE BEGIN TIM3_MspInit 1 */
+
+  /* USER CODE END TIM3_MspInit 1 */
+  }
+}
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
+{
+
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  if(timHandle->Instance==TIM1)
+  {
+  /* USER CODE BEGIN TIM1_MspPostInit 0 */
+
+  /* USER CODE END TIM1_MspPostInit 0 */
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOE_CLK_ENABLE();
@@ -165,7 +243,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *timHandle)
     PB1     ------> TIM1_CH3N
     PB0     ------> TIM1_CH2N
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_10 | GPIO_PIN_9 | GPIO_PIN_8;
+    GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_9|GPIO_PIN_8;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -179,35 +257,62 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *timHandle)
     GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
     HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_1 | GPIO_PIN_0;
+    GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_0;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    /* USER CODE BEGIN TIM1_MspPostInit 1 */
+  /* USER CODE BEGIN TIM1_MspPostInit 1 */
 
-    /* USER CODE END TIM1_MspPostInit 1 */
+  /* USER CODE END TIM1_MspPostInit 1 */
   }
+
 }
 
-void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef *tim_baseHandle)
+void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 {
 
-  if (tim_baseHandle->Instance == TIM1)
+  if(tim_baseHandle->Instance==TIM1)
   {
-    /* USER CODE BEGIN TIM1_MspDeInit 0 */
+  /* USER CODE BEGIN TIM1_MspDeInit 0 */
 
-    /* USER CODE END TIM1_MspDeInit 0 */
+  /* USER CODE END TIM1_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_TIM1_CLK_DISABLE();
 
     /* TIM1 interrupt Deinit */
     HAL_NVIC_DisableIRQ(TIM1_UP_IRQn);
-    /* USER CODE BEGIN TIM1_MspDeInit 1 */
+  /* USER CODE BEGIN TIM1_MspDeInit 1 */
 
-    /* USER CODE END TIM1_MspDeInit 1 */
+  /* USER CODE END TIM1_MspDeInit 1 */
+  }
+}
+
+void HAL_TIMEx_HallSensor_MspDeInit(TIM_HandleTypeDef* timex_hallsensorHandle)
+{
+
+  if(timex_hallsensorHandle->Instance==TIM3)
+  {
+  /* USER CODE BEGIN TIM3_MspDeInit 0 */
+
+  /* USER CODE END TIM3_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_TIM3_CLK_DISABLE();
+
+    /**TIM3 GPIO Configuration
+    PB5     ------> TIM3_CH2
+    PB4 (NJTRST)     ------> TIM3_CH1
+    PC8     ------> TIM3_CH3
+    */
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_5|GPIO_PIN_4);
+
+    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_8);
+
+  /* USER CODE BEGIN TIM3_MspDeInit 1 */
+
+  /* USER CODE END TIM3_MspDeInit 1 */
   }
 }
 
