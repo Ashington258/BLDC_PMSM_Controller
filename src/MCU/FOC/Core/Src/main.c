@@ -31,7 +31,8 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "log.h"
-
+#include "foc.h"
+#include "hall_obs.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,6 +55,8 @@
 /* USER CODE BEGIN PV */
 static SPWM_t spwm;
 SVPWM_Handle svpwm;
+HallObs g_hall;
+FOC_Ctrl foc;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/

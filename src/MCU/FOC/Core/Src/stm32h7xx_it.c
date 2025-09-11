@@ -22,6 +22,9 @@
 #include "stm32h7xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32h7xx_hal_tim_ex.h"
+#include "hall_obs.h"
+#include "foc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +63,9 @@ extern TIM_HandleTypeDef htim3;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
 extern SVPWM_Handle svpwm;
+extern HallObs g_hall;
+extern SVPWM_Handle svpwm;
+extern FOC_Ctrl foc;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -246,10 +252,57 @@ void USART1_IRQHandler(void)
 // 实现SBPWM的回调
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+  // 开环控制
   if (htim->Instance == TIM1)
   {
     SVPWM_TaskStep(&svpwm); // 与 PWM 更新同步，20 kHz
+  }
+  // 闭环控制
+  // if (htim->Instance == TIM1)
+  // {
 
+  //   /* 1) 更新时间戳 & 霍尔插值角度（电角度） */
+  //   uint32_t now_us = HAL_GetTick() * 1000u;
+  //   Hall_UpdateAngle(&g_hall, now_us);
+  //   FOC_UpdateAngle(&foc, g_hall.theta_e);
+
+  //   /* 2) 更新 Vdc（可 1 kHz 读一次，这里简化每次都读） */
+  //   FOC_UpdateVdc(&foc, BusVoltage_Read());
+
+  //   /* 3) 速度外环（分频执行），将 rpm_ref → iq_ref */
+  //   if (FOC_ShouldRunSpeedLoop(&foc))
+  //   {
+  //     FOC_StepSpeedLoop(&foc);
+  //   }
+
+  //   /* 4) 电流环一步：得到 v_alpha/v_beta */
+  //   FOC_StepCurrentLoop(&foc);
+
+  //   /* 5) 送入 SVPWM：这里让 SVPWM 工作在 αβ 模式 */
+  //   /* 归一化：把相电压（V）→ [-1,1]，用估计的 Vdc 映射 */
+  //   float scale = (foc.vdc > 1.f) ? (1.0f / foc.vdc) : 0.0f;
+  //   SVPWM_SetAlphaBeta(&svpwm, foc.v_alpha * scale, foc.v_beta * scale);
+  //   SVPWM_Step(&svpwm);
+  // }
+}
+
+extern HallObs g_hall;
+/* 读取UVW（你用的 TIM3_CH1/2/3 是 PB4/PB5/PC8），AF 输入同样能读 GPIO IDR */
+static inline uint8_t Hall_ReadUVW(void)
+{
+  uint8_t u = (uint8_t)HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4);
+  uint8_t v = (uint8_t)HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5);
+  uint8_t w = (uint8_t)HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_8);
+  return (uint8_t)((u ? 1 : 0) | (v ? 2 : 0) | (w ? 4 : 0));
+}
+/* 霍尔边沿来自 CC1 → HAL_TIM_IC_CaptureCallback */
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim->Instance == TIM3 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
+  {
+    uint32_t now_us = HAL_GetTick() * 1000u; // 可换为更精准的定时器计数
+    Hall_OnEdge(&g_hall, Hall_ReadUVW(), now_us);
   }
 }
+
 /* USER CODE END 1 */

@@ -63,6 +63,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${CONTROL_SOURCES}
     ${CMAKE_SOURCE_DIR}/Core/Src/retarget.c # 由于串口重定向
+    
 )
 
 # Add include paths
